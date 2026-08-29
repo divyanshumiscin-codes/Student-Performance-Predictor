@@ -1,15 +1,14 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, session, redirect, url_for
 import joblib
 import sqlite3
 import csv
 
 app = Flask(__name__)
+app.secret_key = 'spp-dev-secret-key'  # fine for a local college demo; a real deployment would use an environment variable
 
-# Load the trained models once, when the app starts (not on every request)
 classifier = joblib.load('MODEL/classifier_model.pkl')
 regressor = joblib.load('MODEL/regressor_model.pkl')
 
-# Load feature importance once, so explanations reflect the model's real learned weights
 FEATURE_IMPORTANCE = {}
 with open('MODEL/feature_importance.csv') as f:
     reader = csv.DictReader(f)
@@ -53,7 +52,6 @@ def generate_explanation(result, subject_name, marks1, marks2, attendance, failu
     else:
         factors.append(('study_hours', "moderate weekly study habits"))
 
-    # Order every factor by the model's own learned feature importance, strongest first
     factors.sort(key=lambda item: FEATURE_IMPORTANCE.get(item[0], 0), reverse=True)
     reason_text = "; ".join(text for _, text in factors)
 
@@ -69,11 +67,28 @@ def generate_explanation(result, subject_name, marks1, marks2, attendance, failu
 
 @app.route('/')
 def home():
-    return "Student Performance Predictor is running!"
+    return render_template('role_select.html')
+
+
+@app.route('/set-role/<role>')
+def set_role(role):
+    if role not in ('teacher', 'student'):
+        return redirect(url_for('home'))
+    session['role'] = role
+    return redirect(url_for('predict_form'))
+
+
+@app.route('/logout-role')
+def logout_role():
+    session.pop('role', None)
+    return redirect(url_for('home'))
 
 
 @app.route('/predict', methods=['GET', 'POST'])
 def predict_form():
+    if 'role' not in session:
+        return redirect(url_for('home'))
+
     if request.method == 'POST':
         student_name = request.form.get('student_name', '').strip()
         subject = int(request.form.get('subject'))
