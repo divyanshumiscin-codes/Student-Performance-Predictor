@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, session, redirect, url_for
 import joblib
 import sqlite3
 import csv
+import io
 
 app = Flask(__name__)
 app.secret_key = 'spp-dev-secret-key'  # fine for a local college demo; a real deployment would use an environment variable
@@ -156,7 +157,8 @@ def predict_form():
                                 confidence=confidence,
                                 predicted_percentage=predicted_percentage,
                                 risk_category=risk_category,
-                                explanation=explanation)
+                                explanation=explanation,
+                                feature_importance=FEATURE_IMPORTANCE)
 
     return render_template('predict_form.html', errors=None)
 
@@ -172,6 +174,70 @@ def history():
     conn.close()
     return render_template('history.html', records=records)
 
+@app.route('/bulk', methods=['GET', 'POST'])
+def bulk_upload():
+    if session.get('role') != 'teacher':
+        return redirect(url_for('predict_form'))
 
+    results = []
+    if request.method == 'POST':
+        file = request.files.get('csv_file')
+        if file:
+            import csv as csv_module
+            stream = io.StringIO(file.stream.read().decode('utf-8'))
+            reader = csv_module.DictReader(stream)
+
+            conn = sqlite3.connect('predictions.db')
+            cursor = conn.cursor()
+
+            for row in reader:
+                student_name = row['student_name'].strip()
+                subject = int(row['subject'])
+                study_hours = float(row['study_hours'])
+                attendance_issues = int(row['attendance_issues'])
+                past_failures = int(row['past_failures'])
+                previous_marks_1 = float(row['previous_marks_1'])
+                previous_marks_2 = float(row['previous_marks_2'])
+
+                input_data = [[study_hours, attendance_issues, past_failures,
+                                previous_marks_1, previous_marks_2, subject]]
+
+                predicted_result = classifier.predict(input_data)[0]
+                confidence = round(classifier.predict_proba(input_data).max() * 100, 2)
+                predicted_percentage = round(regressor.predict(input_data)[0], 2)
+
+                if predicted_percentage >= 75:
+                    risk_category = "Low"
+                elif predicted_percentage >= 50:
+                    risk_category = "Medium"
+                else:
+                    risk_category = "High"
+
+                subject_name = "Math" if subject == 0 else "Language"
+                explanation = generate_explanation(
+                    predicted_result, subject_name, previous_marks_1, previous_marks_2,
+                    attendance_issues, past_failures, study_hours, risk_category
+                )
+
+                cursor.execute('''
+                    INSERT INTO predictions
+                    (student_name, subject, study_hours, attendance_issues, past_failures,
+                     previous_marks_1, previous_marks_2, predicted_result, confidence,
+                     predicted_percentage, risk_category, explanation)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ''', (student_name, subject_name, study_hours, attendance_issues, past_failures,
+                      previous_marks_1, previous_marks_2, predicted_result, confidence,
+                      predicted_percentage, risk_category, explanation))
+
+                results.append({
+                    'student_name': student_name, 'subject': subject_name,
+                    'predicted_result': predicted_result, 'confidence': confidence,
+                    'predicted_percentage': predicted_percentage, 'risk_category': risk_category
+                })
+
+            conn.commit()
+            conn.close()
+
+    return render_template('bulk_upload.html', results=results)
 if __name__ == '__main__':
     app.run(debug=True)

@@ -18,8 +18,8 @@
             <td>{{ r['student_name'] }}</td>
             <td>{{ r['subject'] }}</td>
             <td><span class="badge {{ 'bg-success' if r['predicted_result'] == 'Pass' else 'bg-danger' }}">{{ r['predicted_result'] }}</span></td>
-            <td>{{ r['confidence'] }}%</td>
-            <td>{{ r['predicted_percentage'] }}%</td>
+            <td class="data-figure">{{ r['confidence'] }}%</td>
+            <td class="data-figure">{{ r['predicted_percentage'] }}%</td>
             <td><span class="badge {{ 'bg-success' if r['risk_category'] == 'Low' else ('bg-warning text-dark' if r['risk_category'] == 'Medium' else 'bg-danger') }}">{{ r['risk_category'] }}</span></td>
         </tr>
         {% endfor %}

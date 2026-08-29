@@ -10,8 +10,8 @@
         {{ predicted_result }}
       </span>
     </p>
-    <p><strong>Confidence:</strong> {{ confidence }}%</p>
-    <p><strong>Predicted Percentage:</strong> {{ predicted_percentage }}%</p>
+    <p><strong>Confidence:</strong> <span class="data-figure">{{ confidence }}%</span></p>
+<p><strong>Predicted Percentage:</strong> <span class="data-figure">{{ predicted_percentage }}%</span></p>
     <p><strong>Risk Category:</strong>
       <span class="badge {{ 'bg-success' if risk_category == 'Low' else ('bg-warning text-dark' if risk_category == 'Medium' else 'bg-danger') }}">
         {{ risk_category }}
@@ -20,5 +20,32 @@
     <p><strong>Why:</strong> {{ explanation }}</p>
   </div>
 </div>
+<div class="card mt-4">
+  <div class="card-body">
+    <h4>What the model weighs most</h4>
+    <canvas id="importanceChart" height="120"></canvas>
+  </div>
+</div>
+<hr class="ledger-rule">
 <a href="/predict" class="btn btn-primary mt-3">Predict Another</a>
+{% endblock %}
+{% block scripts %}
+<script>
+new Chart(document.getElementById('importanceChart'), {
+    type: 'bar',
+    data: {
+        labels: [{% for feature, value in feature_importance.items() %}'{{ feature }}',{% endfor %}],
+        datasets: [{
+            label: 'Feature Importance',
+            data: [{% for feature, value in feature_importance.items() %}{{ value }},{% endfor %}],
+            backgroundColor: '#16233F'
+        }]
+    },
+    options: {
+        indexAxis: 'y',
+        plugins: { legend: { display: false } },
+        scales: { x: { beginAtZero: true } }
+    }
+});
+</script>
 {% endblock %}

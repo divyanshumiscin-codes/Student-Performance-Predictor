@@ -1,0 +1,80 @@
+:root {
+  --ink-navy: #16233F;
+  --paper: #F4F6F7;
+  --chalk-green: #1F7A53;
+  --red-ink: #B33A3A;
+  --amber-marker: #C98A2B;
+  --slate: #5C6B7A;
+  --slate-light: #D8DEE2;
+}
+
+body {
+  background-color: var(--paper);
+  font-family: 'IBM Plex Sans', sans-serif;
+  color: #1C1F24;
+}
+
+h1, h2, h3, h4, .navbar-brand {
+  font-family: 'IBM Plex Serif', serif;
+  letter-spacing: -0.01em;
+}
+
+.navbar {
+  background-color: var(--ink-navy) !important;
+  border-bottom: 3px double var(--slate-light);
+}
+
+.navbar-brand {
+  font-weight: 600;
+  font-size: 1.35rem;
+}
+
+.card {
+  border: 1px solid var(--slate-light);
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(22, 35, 63, 0.08);
+}
+
+.card-body h4 {
+  border-bottom: 1px dashed var(--slate-light);
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.btn-primary {
+  background-color: var(--ink-navy);
+  border-color: var(--ink-navy);
+}
+.btn-primary:hover {
+  background-color: #0f1830;
+  border-color: #0f1830;
+}
+
+.btn-outline-primary {
+  color: var(--ink-navy);
+  border-color: var(--ink-navy);
+}
+.btn-outline-primary:hover {
+  background-color: var(--ink-navy);
+  border-color: var(--ink-navy);
+}
+
+.badge.bg-success { background-color: var(--chalk-green) !important; }
+.badge.bg-danger  { background-color: var(--red-ink) !important; }
+.badge.bg-warning { background-color: var(--amber-marker) !important; color: #fff !important; }
+
+.data-figure {
+  font-family: 'IBM Plex Mono', monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+table.table thead {
+  background-color: var(--ink-navy);
+  color: #fff;
+}
+
+.ledger-rule {
+  border: none;
+  border-top: 1px dashed var(--slate);
+  margin: 1.5rem 0;
+}
