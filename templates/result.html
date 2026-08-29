@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Prediction Result{% endblock %}
+{% block content %}
+<h2>Prediction Result</h2>
+<div class="card">
+  <div class="card-body">
+    <h4 class="card-title">{{ student_name }} — {{ subject }}</h4>
+    <p><strong>Result:</strong>
+      <span class="badge {{ 'bg-success' if predicted_result == 'Pass' else 'bg-danger' }}">
+        {{ predicted_result }}
+      </span>
+    </p>
+    <p><strong>Confidence:</strong> {{ confidence }}%</p>
+    <p><strong>Predicted Percentage:</strong> {{ predicted_percentage }}%</p>
+    <p><strong>Risk Category:</strong>
+      <span class="badge {{ 'bg-success' if risk_category == 'Low' else ('bg-warning text-dark' if risk_category == 'Medium' else 'bg-danger') }}">
+        {{ risk_category }}
+      </span>
+    </p>
+    <p><strong>Why:</strong> {{ explanation }}</p>
+  </div>
+</div>
+<a href="/predict" class="btn btn-primary mt-3">Predict Another</a>
+{% endblock %}
