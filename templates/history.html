@@ -2,6 +2,7 @@
 {% block title %}Prediction History{% endblock %}
 {% block content %}
 <h2 class="mb-4">Prediction History</h2>
+<a href="{{ url_for('export_history') }}" class="btn btn-outline-primary mb-3">Export as CSV</a>
 {% if records %}
 <div class="table-responsive">
 <table class="table table-striped table-bordered">

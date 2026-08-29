@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, session, redirect, url_for
+from flask import Flask, render_template, request, session, redirect, url_for, Response
 import joblib
 import sqlite3
 import csv
@@ -173,6 +173,30 @@ def history():
     records = cursor.fetchall()
     conn.close()
     return render_template('history.html', records=records)
+
+@app.route('/history/export')
+def export_history():
+    if session.get('role') != 'teacher':
+        return redirect(url_for('predict_form'))
+
+    conn = sqlite3.connect('predictions.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM predictions ORDER BY created_at DESC')
+    rows = cursor.fetchall()
+    columns = [description[0] for description in cursor.description]
+    conn.close()
+
+    def generate():
+        yield ','.join(columns) + '\n'
+        for row in rows:
+            values = [str(v).replace(',', ';') for v in row]
+            yield ','.join(values) + '\n'
+
+    return Response(
+        generate(),
+        mimetype='text/csv',
+        headers={'Content-Disposition': 'attachment; filename=prediction_history.csv'}
+    )
 
 @app.route('/bulk', methods=['GET', 'POST'])
 def bulk_upload():
