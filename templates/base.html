@@ -13,6 +13,9 @@
         {% if session.get('role') %}
         <span class="text-light">
             Logged in as: <strong>{{ session.get('role').capitalize() }}</strong>
+            {% if session.get('role') == 'teacher' %}
+            | <a href="{{ url_for('history') }}" class="text-light">History</a>
+            {% endif %}
             | <a href="{{ url_for('logout_role') }}" class="text-warning">Switch Role</a>
         </span>
         {% endif %}

@@ -160,6 +160,18 @@ def predict_form():
 
     return render_template('predict_form.html', errors=None)
 
+@app.route('/history')
+def history():
+    if session.get('role') != 'teacher':
+        return redirect(url_for('predict_form'))
+    conn = sqlite3.connect('predictions.db')
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM predictions ORDER BY created_at DESC')
+    records = cursor.fetchall()
+    conn.close()
+    return render_template('history.html', records=records)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
