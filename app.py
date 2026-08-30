@@ -2,6 +2,8 @@ from flask import Flask, render_template, request, session, redirect, url_for, R
 import joblib
 import sqlite3
 import csv
+import csv
+import pandas as pd
 import io
 
 app = Flask(__name__)
@@ -15,6 +17,14 @@ with open('MODEL/feature_importance.csv') as f:
     reader = csv.DictReader(f)
     for row in reader:
         FEATURE_IMPORTANCE[row['feature']] = float(row['importance'])
+def compute_class_averages():
+    df_math = pd.read_csv('MODEL/student-mat.csv', sep=';')
+    df_por = pd.read_csv('MODEL/student-por.csv', sep=';')
+    avg_math = (df_math['G3'] / 20 * 100).mean()
+    avg_por = (df_por['G3'] / 20 * 100).mean()
+    return {0: round(avg_math, 2), 1: round(avg_por, 2)}
+
+CLASS_AVERAGE = compute_class_averages()
 
 
 def generate_explanation(result, subject_name, marks1, marks2, attendance, failures, study_hours, risk_category):
@@ -158,7 +168,8 @@ def predict_form():
                                 predicted_percentage=predicted_percentage,
                                 risk_category=risk_category,
                                 explanation=explanation,
-                                feature_importance=FEATURE_IMPORTANCE)
+                                feature_importance=FEATURE_IMPORTANCE,
+                                class_average=CLASS_AVERAGE[subject])
 
     return render_template('predict_form.html', errors=None)
 

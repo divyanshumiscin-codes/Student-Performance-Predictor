@@ -26,12 +26,17 @@
     <canvas id="importanceChart" height="120"></canvas>
   </div>
 </div>
+<div class="card mt-4">
+  <div class="card-body">
+    <h4>You vs. Class Average ({{ subject }})</h4>
+    <canvas id="classAvgChart" height="100"></canvas>
+  </div>
+</div>
 <hr class="ledger-rule">
 <a href="/predict" class="btn btn-primary mt-3">Predict Another</a>
 {% endblock %}
 {% block scripts %}
-<script>
-new Chart(document.getElementById('importanceChart'), {
+<script>new Chart(document.getElementById('importanceChart'), {
     type: 'bar',
     data: {
         labels: [{% for feature, value in feature_importance.items() %}'{{ feature }}',{% endfor %}],
@@ -47,5 +52,20 @@ new Chart(document.getElementById('importanceChart'), {
         scales: { x: { beginAtZero: true } }
     }
 });
-</script>
+
+new Chart(document.getElementById('classAvgChart'), {
+    type: 'bar',
+    data: {
+        labels: ['{{ student_name }}', 'Class Average'],
+        datasets: [{
+            label: 'Percentage',
+            data: [{{ predicted_percentage }}, {{ class_average }}],
+            backgroundColor: ['#16233F', '#5C6B7A']
+        }]
+    },
+    options: {
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, max: 100 } }
+    }
+});</script>
 {% endblock %}
