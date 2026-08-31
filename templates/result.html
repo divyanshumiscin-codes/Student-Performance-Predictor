@@ -32,6 +32,39 @@
     <canvas id="classAvgChart" height="100"></canvas>
   </div>
 </div>
+<div class="card mt-4">
+    <div class="card-body">
+        <h4>What If? — try different numbers</h4>
+        <p class="text-muted" style="font-size: 0.9rem;">Drag any slider to see how the prediction changes. Starts from this student's actual submitted numbers.</p>
+
+        <div class="mb-3">
+            <label class="form-label">Study Hours: <span id="whatifStudyHoursVal" class="data-figure">{{ study_hours }}</span></label>
+            <input type="range" class="form-range" id="whatifStudyHours" min="1" max="4" step="1" value="{{ study_hours }}">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Attendance Issues: <span id="whatifAttendanceVal" class="data-figure">{{ attendance_issues }}</span></label>
+            <input type="range" class="form-range" id="whatifAttendance" min="0" max="30" step="1" value="{{ attendance_issues }}">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Past Failures: <span id="whatifFailuresVal" class="data-figure">{{ past_failures }}</span></label>
+            <input type="range" class="form-range" id="whatifFailures" min="0" max="4" step="1" value="{{ past_failures }}">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Previous Marks 1: <span id="whatifMarks1Val" class="data-figure">{{ previous_marks_1 }}</span></label>
+            <input type="range" class="form-range" id="whatifMarks1" min="0" max="20" step="1" value="{{ previous_marks_1 }}">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Previous Marks 2: <span id="whatifMarks2Val" class="data-figure">{{ previous_marks_2 }}</span></label>
+            <input type="range" class="form-range" id="whatifMarks2" min="0" max="20" step="1" value="{{ previous_marks_2 }}">
+        </div>
+
+        <hr style="border: none; border-top: 1px dashed var(--slate); margin: 1rem 0;">
+
+        <p class="mb-1">Result: <span id="whatifResult" style="font-weight: bold;">—</span></p>
+        <p class="mb-1 data-figure">Confidence: <span id="whatifConfidence">—</span>%</p>
+        <p class="mb-0 data-figure">Predicted Percentage: <span id="whatifPercentage">—</span>%</p>
+    </div>
+</div>
 <hr class="ledger-rule">
 <a href="/predict" class="btn btn-primary mt-3">Predict Another</a>
 {% endblock %}
@@ -67,5 +100,55 @@ new Chart(document.getElementById('classAvgChart'), {
         plugins: { legend: { display: false } },
         scales: { y: { beginAtZero: true, max: 100 } }
     }
-});</script>
+});
+const whatifInputs = {
+    study_hours: document.getElementById('whatifStudyHours'),
+    attendance_issues: document.getElementById('whatifAttendance'),
+    past_failures: document.getElementById('whatifFailures'),
+    previous_marks_1: document.getElementById('whatifMarks1'),
+    previous_marks_2: document.getElementById('whatifMarks2')
+};
+
+const whatifLabels = {
+    study_hours: document.getElementById('whatifStudyHoursVal'),
+    attendance_issues: document.getElementById('whatifAttendanceVal'),
+    past_failures: document.getElementById('whatifFailuresVal'),
+    previous_marks_1: document.getElementById('whatifMarks1Val'),
+    previous_marks_2: document.getElementById('whatifMarks2Val')
+};
+
+function runWhatIf() {
+    const payload = {
+        study_hours: whatifInputs.study_hours.value,
+        attendance_issues: whatifInputs.attendance_issues.value,
+        past_failures: whatifInputs.past_failures.value,
+        previous_marks_1: whatifInputs.previous_marks_1.value,
+        previous_marks_2: whatifInputs.previous_marks_2.value,
+        subject: {{ subject_num }}
+    };
+
+    for (const key in whatifInputs) {
+        whatifLabels[key].textContent = whatifInputs[key].value;
+    }
+
+    fetch('/api/whatif', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('whatifResult').textContent = data.result;
+        document.getElementById('whatifResult').style.color =
+            data.result === 'Pass' ? 'var(--chalk-green)' : 'var(--red-ink)';
+        document.getElementById('whatifConfidence').textContent = data.confidence;
+        document.getElementById('whatifPercentage').textContent = data.percentage;
+    });
+}
+
+for (const key in whatifInputs) {
+    whatifInputs[key].addEventListener('input', runWhatIf);
+}
+
+runWhatIf();</script>
 {% endblock %}

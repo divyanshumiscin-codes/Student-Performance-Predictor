@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, session, redirect, url_for, Response
+from flask import Flask, render_template, request, session, redirect, url_for, Response, jsonify
 import joblib
 import sqlite3
 import csv
@@ -178,15 +178,21 @@ def predict_form():
         conn.close()
 
         return render_template('result.html',
-                                student_name=student_name,
-                                subject=subject_name,
-                                predicted_result=predicted_result,
-                                confidence=confidence,
-                                predicted_percentage=predicted_percentage,
-                                risk_category=risk_category,
-                                explanation=explanation,
-                                feature_importance=FEATURE_IMPORTANCE,
-                                class_average=CLASS_AVERAGE[subject])
+                            student_name=student_name,
+                            subject=subject_name,
+                            subject_num=subject,
+                            predicted_result=predicted_result,
+                            confidence=confidence,
+                            predicted_percentage=predicted_percentage,
+                            risk_category=risk_category,
+                            explanation=explanation,
+                            feature_importance=FEATURE_IMPORTANCE,
+                            class_average=CLASS_AVERAGE[subject],
+                            study_hours=study_hours,
+                            attendance_issues=attendance_issues,
+                            past_failures=past_failures,
+                            previous_marks_1=previous_marks_1,
+                            previous_marks_2=previous_marks_2)
 
     return render_template('predict_form.html', errors=None)
 
@@ -324,5 +330,30 @@ def compare():
         }
 
     return render_template('compare.html', metrics=MODEL_METRICS, result=prediction_result)
+
+
+@app.route('/api/whatif', methods=['POST'])
+def whatif():
+    data = request.get_json()
+
+    study_hours = float(data['study_hours'])
+    attendance_issues = float(data['attendance_issues'])
+    past_failures = float(data['past_failures'])
+    previous_marks_1 = float(data['previous_marks_1'])
+    previous_marks_2 = float(data['previous_marks_2'])
+    subject = int(data['subject'])
+
+    input_data = [[study_hours, attendance_issues, past_failures,
+                    previous_marks_1, previous_marks_2, subject]]
+
+    result = classifier.predict(input_data)[0]
+    confidence = max(classifier.predict_proba(input_data)[0]) * 100
+    percentage = regressor.predict(input_data)[0]
+
+    return jsonify({
+        'result': result,
+        'confidence': round(confidence, 2),
+        'percentage': round(percentage, 2)
+    })
 if __name__ == '__main__':
     app.run(debug=True)
