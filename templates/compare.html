@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container my-4">
+    <h2 class="mb-1">Model Comparison</h2>
+    <p class="text-muted">Random Forest vs Logistic Regression — evaluated on the same 209-student test set.</p>
+    <hr style="border: none; border-top: 1px dashed var(--slate); margin: 1.5rem 0;">
+
+    <div class="table-responsive mb-5">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Metric</th>
+                    <th>Random Forest</th>
+                    <th>Logistic Regression</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Accuracy</td>
+                    <td class="data-figure">{{ metrics.random_forest.accuracy }}%</td>
+                    <td class="data-figure">{{ metrics.logistic_regression.accuracy }}%</td>
+                </tr>
+                <tr>
+                    <td>Precision</td>
+                    <td class="data-figure">{{ metrics.random_forest.precision }}%</td>
+                    <td class="data-figure">{{ metrics.logistic_regression.precision }}%</td>
+                </tr>
+                <tr>
+                    <td>Recall</td>
+                    <td class="data-figure">{{ metrics.random_forest.recall }}%</td>
+                    <td class="data-figure">{{ metrics.logistic_regression.recall }}%</td>
+                </tr>
+                <tr>
+                    <td>F1-score</td>
+                    <td class="data-figure">{{ metrics.random_forest.f1 }}%</td>
+                    <td class="data-figure">{{ metrics.logistic_regression.f1 }}%</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <hr style="border: none; border-top: 1px dashed var(--slate); margin: 1.5rem 0;">
+
+    <h4 class="mb-3">Try it: compare predictions live</h4>
+    <p class="text-muted">Enter a student's data to see what each model predicts.</p>
+
+    <form method="POST" class="row g-3">
+        <div class="col-md-4">
+            <label class="form-label">Study Hours</label>
+            <input type="number" step="any" name="study_hours" class="form-control" required>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Attendance Issues</label>
+            <input type="number" step="any" name="attendance_issues" class="form-control" required>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Past Failures</label>
+            <input type="number" step="any" name="past_failures" class="form-control" required>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Previous Marks 1</label>
+            <input type="number" step="any" name="previous_marks_1" class="form-control" required>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Previous Marks 2</label>
+            <input type="number" step="any" name="previous_marks_2" class="form-control" required>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Subject</label>
+            <select name="subject" class="form-select" required>
+                <option value="0">Math</option>
+                <option value="1">Language</option>
+            </select>
+        </div>
+        <div class="col-12">
+            <button type="submit" class="btn btn-primary">Compare Predictions</button>
+        </div>
+    </form>
+
+    {% if result %}
+    <hr style="border: none; border-top: 1px dashed var(--slate); margin: 2rem 0;">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card p-3 mb-3">
+                <h5>Random Forest</h5>
+                <p class="mb-1">Prediction:
+                    <span style="color: {{ 'var(--chalk-green)' if result.rf_pred == 'Pass' else 'var(--red-ink)' }}; font-weight: bold;">
+                        {{ result.rf_pred }}
+                    </span>
+                </p>
+                <p class="data-figure mb-0">Confidence: {{ result.rf_conf }}%</p>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card p-3 mb-3">
+                <h5>Logistic Regression</h5>
+                <p class="mb-1">Prediction:
+                    <span style="color: {{ 'var(--chalk-green)' if result.log_pred == 'Pass' else 'var(--red-ink)' }}; font-weight: bold;">
+                        {{ result.log_pred }}
+                    </span>
+                </p>
+                <p class="data-figure mb-0">Confidence: {{ result.log_conf }}%</p>
+            </div>
+        </div>
+    </div>
+
+    {% if result.agree %}
+        <div class="alert" style="border-left: 4px solid var(--chalk-green);">
+            Both models agree on this prediction.
+        </div>
+    {% else %}
+        <div class="alert" style="border-left: 4px solid var(--amber-marker);">
+            The models disagree — Random Forest is generally the more reliable of the two on this data (higher accuracy on the test set), but a disagreement like this usually flags a genuinely borderline student profile.
+        </div>
+    {% endif %}
+    {% endif %}
+</div>
+{% endblock %}

@@ -11,6 +11,8 @@ app.secret_key = 'spp-dev-secret-key'  # fine for a local college demo; a real d
 
 classifier = joblib.load('MODEL/classifier_model.pkl')
 regressor = joblib.load('MODEL/regressor_model.pkl')
+logistic_model = joblib.load('MODEL/logistic_model.pkl')
+scaler = joblib.load('MODEL/scaler.pkl')
 
 FEATURE_IMPORTANCE = {}
 with open('MODEL/feature_importance.csv') as f:
@@ -25,6 +27,21 @@ def compute_class_averages():
     return {0: round(avg_math, 2), 1: round(avg_por, 2)}
 
 CLASS_AVERAGE = compute_class_averages()
+
+MODEL_METRICS = {
+    'random_forest': {
+        'accuracy': 91.39,
+        'precision': 91.72,
+        'recall': 96.64,
+        'f1': 94.12
+    },
+    'logistic_regression': {
+        'accuracy': 87.56,
+        'precision': 87.73,
+        'recall': 95.97,
+        'f1': 91.67
+    }
+}
 
 
 def generate_explanation(result, subject_name, marks1, marks2, attendance, failures, study_hours, risk_category):
@@ -274,5 +291,38 @@ def bulk_upload():
             conn.close()
 
     return render_template('bulk_upload.html', results=results)
+
+@app.route('/compare', methods=['GET', 'POST'])
+def compare():
+    if session.get('role') != 'teacher':
+        return redirect(url_for('predict_form'))
+
+    prediction_result = None
+
+    if request.method == 'POST':
+        study_hours = float(request.form['study_hours'])
+        attendance_issues = float(request.form['attendance_issues'])
+        past_failures = float(request.form['past_failures'])
+        previous_marks_1 = float(request.form['previous_marks_1'])
+        previous_marks_2 = float(request.form['previous_marks_2'])
+        subject = int(request.form['subject'])
+
+        input_data = [[study_hours, attendance_issues, past_failures,
+                        previous_marks_1, previous_marks_2, subject]]
+
+        rf_pred = classifier.predict(input_data)[0]
+        rf_conf = max(classifier.predict_proba(input_data)[0]) * 100
+
+        input_scaled = scaler.transform(input_data)
+        log_pred = logistic_model.predict(input_scaled)[0]
+        log_conf = max(logistic_model.predict_proba(input_scaled)[0]) * 100
+
+        prediction_result = {
+            'rf_pred': rf_pred, 'rf_conf': round(rf_conf, 2),
+            'log_pred': log_pred, 'log_conf': round(log_conf, 2),
+            'agree': rf_pred == log_pred
+        }
+
+    return render_template('compare.html', metrics=MODEL_METRICS, result=prediction_result)
 if __name__ == '__main__':
     app.run(debug=True)

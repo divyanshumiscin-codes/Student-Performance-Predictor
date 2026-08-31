@@ -17,6 +17,7 @@
             {% if session.get('role') == 'teacher' %}
 |           <a href="{{ url_for('history') }}" class="text-light">History</a>
 |           <a href="{{ url_for('bulk_upload') }}" class="text-light">Bulk Upload</a>
+            `<a href="{{ url_for('compare') }}" class="text-light">Compare Models</a>
             {% endif %}
             | <a href="{{ url_for('logout_role') }}" class="text-warning">Switch Role</a>
         </span>
