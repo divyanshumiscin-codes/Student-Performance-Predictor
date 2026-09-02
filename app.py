@@ -93,6 +93,21 @@ def generate_explanation(result, subject_name, marks1, marks2, attendance, failu
             f"primarily shaped by (ordered by the model's own feature importance): {reason_text}. {recommendation}")
 
 
+def get_weak_areas(marks1, marks2, attendance, failures, study_hours):
+    weak_areas = []
+    if marks2 < 10:
+        weak_areas.append(f"Recent marks ({marks2}/20)")
+    if marks1 < 10:
+        weak_areas.append(f"Earlier marks ({marks1}/20)")
+    if attendance >= 8:
+        weak_areas.append(f"Attendance ({attendance} absences)")
+    if failures > 0:
+        weak_areas.append(f"Past failures ({failures})")
+    if study_hours <= 1:
+        weak_areas.append("Study hours")
+    return weak_areas
+
+
 @app.route('/')
 def home():
     return render_template('role_select.html')
@@ -150,6 +165,24 @@ def predict_form():
         confidence = round(classifier.predict_proba(input_data).max() * 100, 2)
         predicted_percentage = round(regressor.predict(input_data)[0], 2)
 
+        other_subject = 1 - subject
+        other_subject_name = "Language" if other_subject == 1 else "Math"
+        other_input_data = [[study_hours, attendance_issues, past_failures,
+                              previous_marks_1, previous_marks_2, other_subject]]
+        other_predicted_result = classifier.predict(other_input_data)[0]
+        other_confidence = round(classifier.predict_proba(other_input_data).max() * 100, 2)
+        other_predicted_percentage = round(regressor.predict(other_input_data)[0], 2)
+
+        if predicted_percentage > other_predicted_percentage:
+            weaker_subject = other_subject_name
+            percentage_gap = round(predicted_percentage - other_predicted_percentage, 2)
+        elif other_predicted_percentage > predicted_percentage:
+            weaker_subject = "Math" if subject == 0 else "Language"
+            percentage_gap = round(other_predicted_percentage - predicted_percentage, 2)
+        else:
+            weaker_subject = None
+            percentage_gap = 0
+
         if predicted_percentage >= 75:
             risk_category = "Low"
         elif predicted_percentage >= 50:
@@ -162,6 +195,7 @@ def predict_form():
             predicted_result, subject_name, previous_marks_1, previous_marks_2,
             attendance_issues, past_failures, study_hours, risk_category
         )
+        weak_areas = get_weak_areas(previous_marks_1, previous_marks_2, attendance_issues, past_failures, study_hours)
 
         conn = sqlite3.connect('predictions.db')
         cursor = conn.cursor()
@@ -188,11 +222,18 @@ def predict_form():
                             explanation=explanation,
                             feature_importance=FEATURE_IMPORTANCE,
                             class_average=CLASS_AVERAGE[subject],
+                            other_subject_name=other_subject_name,
                             study_hours=study_hours,
                             attendance_issues=attendance_issues,
                             past_failures=past_failures,
+                            weak_areas=weak_areas,
                             previous_marks_1=previous_marks_1,
-                            previous_marks_2=previous_marks_2)
+                            previous_marks_2=previous_marks_2,
+                            other_predicted_result=other_predicted_result,
+                            other_confidence=other_confidence,
+                            other_predicted_percentage=other_predicted_percentage,
+                            weaker_subject=weaker_subject,
+                            percentage_gap=percentage_gap)
 
     return render_template('predict_form.html', errors=None)
 

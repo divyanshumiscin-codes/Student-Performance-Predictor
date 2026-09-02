@@ -18,7 +18,40 @@
       </span>
     </p>
     <p><strong>Why:</strong> {{ explanation }}</p>
-  </div>
+    {% if weak_areas %}
+<p class="mb-0"><strong>Weak areas flagged:</strong>
+    {% for area in weak_areas %}
+    <span class="badge" style="background-color: var(--red-ink); margin-right: 4px;">{{ area }}</span>
+    {% endfor %}
+</p>
+{% endif %}
+      </div>
+</div>
+<div class="card mt-4">
+    <div class="card-body">
+        <h4>Subject Comparison</h4>
+        <p class="text-muted" style="font-size: 0.9rem;">Same study habits, attendance, and marks — how would this student do in {{ other_subject_name }} instead?</p>
+        <div class="row">
+            <div class="col-md-6">
+                <p class="mb-1">{{ subject }} (this prediction):
+                    <span style="color: {{ 'var(--chalk-green)' if predicted_result == 'Pass' else 'var(--red-ink)' }}; font-weight: bold;">{{ predicted_result }}</span>
+                </p>
+                <p class="data-figure mb-0">Predicted Percentage: {{ predicted_percentage }}%</p>
+            </div>
+            <div class="col-md-6">
+                <p class="mb-1">{{ other_subject_name }}:
+                    <span style="color: {{ 'var(--chalk-green)' if other_predicted_result == 'Pass' else 'var(--red-ink)' }}; font-weight: bold;">{{ other_predicted_result }}</span>
+                </p>
+                <p class="data-figure mb-0">Predicted Percentage: {{ other_predicted_percentage }}%</p>
+            </div>
+        </div>
+        <hr style="border: none; border-top: 1px dashed var(--slate); margin: 1rem 0;">
+        {% if weaker_subject %}
+        <p class="mb-0">Weaker subject area: <strong>{{ weaker_subject }}</strong> (by {{ percentage_gap }} percentage points) — worth extra support here.</p>
+        {% else %}
+        <p class="mb-0">This student's profile predicts nearly identical performance in both subjects.</p>
+        {% endif %}
+    </div>
 </div>
 <div class="card mt-4">
   <div class="card-body">
